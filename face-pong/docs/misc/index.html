@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      #gameCanvas {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+        position: absolute;
+        align: center;
+      }
+      #scoreboard {
+        text-align: center;
+        font-family: Segoe UI, Helvetica, Ubuntu, sans-serif;
+        color: white;
+      }
+      #scores {
+        font-size: 600%;
+        padding: 0;
+        margin: 0;
+        color: white;
+      }
+      #title {
+        background-color: white;
+        color: black;
+      }
+    </style>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="./scripts/three.min.js"></script>
+
+    <script src="./scripts/game.js"></script>
+
+    <script type="module">
+      const videoElement = document.getElementsByClassName("input_video")[0];
+      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+      const canvasCtx = canvasElement.getContext("2d");
+      function map(x, in_min, in_max, out_min, out_max) {
+        return (
+          ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+        );
+      }
+
+      function onResults(results) {
+        // Draw the overlays.
+        /*
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(
+          results.image,
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height
+        );
+        if (results.detections.length > 0) {
+          drawingUtils.drawRectangle(
+            canvasCtx,
+            results.detections[0].boundingBox,
+            { color: "blue", lineWidth: 4, fillColor: "#00000000" }
+          );
+          drawingUtils.drawLandmarks(
+            canvasCtx,
+            results.detections[0].landmarks,
+            {
+              color: "red",
+              radius: 5,
+            }
+          );
+        }
+        */
+        try {
+          var nose = results.detections[0].landmarks[2];
+          nosePos = map(nose.x, 1, 0, 0, 100);
+          if (nosePos > 85) {
+            nosePos = 85;
+          }
+          else if (nosePos < 15) {
+            nosePos = 15;
+          }
+          nosePos = map(nosePos, 15, 85, 0,100)
+          document.getElementById("footer").style.backgroundColor = "green"
+          document.getElementById("footerTab").style.marginLeft = (nosePos-1).toFixed(0) + "%";
+        } catch (e) {
+          //nosePos = 50;
+          document.getElementById("footer").style.backgroundColor = "red"
+          console.log("No face detected");
+        }
+        canvasCtx.restore();
+      }
+
+      const faceDetection = new FaceDetection({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        },
+      });
+      faceDetection.setOptions({
+        //modelSelection: 0,
+        model: "short",
+        minDetectionConfidence: 0.5,
+      });
+      faceDetection.onResults(onResults);
+
+      const camera = new Camera(videoElement, {
+        onFrame: async () => {
+          await faceDetection.send({ image: videoElement });
+        },
+        width: 1280,
+        height: 720,
+      });
+      camera.start();
+      setTimeout("setup()", 2000);
+    </script>
+  </head>
+  <body>
+    <div style="display: none">
+      <video class="input_video"></video>
+      <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    </div>
+
+    <div id="gameCanvas"></div>
+    <div id="scoreboard">
+      <h1 id="scores">0-0</h1>
+      <h1 id="title">3D PONG</h1>
+      <h2 id="winnerBoard">First to 7 wins!</h2>
+      <h3>A - move left <br />D - move right</h3>
+    </div>
+    <div id="footer" style='width:100vw;height:50px;background:red;position:fixed;bottom:0'>
+        <div id="footerTab" style='width:50px;height:50px;background:red'>
+          <img id="outputImg" style='width:50px;height:50px'/>
+          <!-- <video autoplay="true" id="videoElement"style='width:50px;height:50px'> </video> -->
+        </div>
+    </div>
+  <script>
+    // let video = document.querySelector("#videoElement")
+    // if(navigator.mediaDevices.getUserMedia){
+    //   navigator.mediaDevices.getUserMedia({video:true}).then(function (stream){ 
+    //     video.srcObject=stream
+    //   })
+
+    // }
+    // var imgFromCanvas = new Image;
+    var image = new Image();
+    image.id = "pic";
+    image.src = document.getElementsByClassName("output_canvas")[0].toDataURL();
+    document.getElementById('outputImg').appendChild(image);
+  </script>
+  </body>
+</html>

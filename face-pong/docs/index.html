@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      #gameCanvas {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+        position: absolute;
+      }
+      #scoreboard {
+        text-align: center;
+        font-family: Segoe UI, Helvetica, Ubuntu, sans-serif;
+        color: white;
+      }
+      #scores {
+        font-size: 600%;
+        padding: 0;
+        margin: 0;
+        color: white;
+      }
+      #title {
+        background-color: white;
+        color: black;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+
+    <!-- <script src="https://cdn.jsdelivr.net/gh/varun-spectre/face-pong@latest/docs/scripts/game.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/gh/varun-spectre/face-pong@latest/docs/scripts/three.min.js" crossorigin="anonymous"></script> -->
+    
+  
+    <script src="./scripts/three.min.js"></script>
+
+    <script src="./scripts/game.js"></script>
+
+    <script type="module">
+      const videoElement = document.getElementsByClassName("input_video")[0];
+      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+      const canvasCtx = canvasElement.getContext("2d");
+      function map(x, in_min, in_max, out_min, out_max) {
+        return (
+          ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+        );
+      }
+
+      function onResults1(results) {
+        let boundaryDetails = [];
+        try {
+          var nose = results.detections[0].landmarks[2];
+          // console.log("results.detections[0].landmarks[2].x", results.detections[0].landmarks[2].x)
+          // boundaryDetails = [...results.detections[0].landmarks];
+          // boundaryDetails.splice(0, 2);
+          // boundaryDetails.splice(1, boundaryDetails.length);
+          // console.log("boundaryDetails", boundaryDetails)
+          // console.log("results.detections[0].boundingBox", results.detections[0].boundingBox)
+          // console.log("results.detections[0].boundingBox.xCenter", results.detections[0].boundingBox.xCenter)
+          console.log("canvas height and width",canvasElement.width, canvasElement.height )
+          nosePos = map(nose.x, 1, 0, 0, 100);
+          if (nosePos > 85) {
+            nosePos = 85;
+          } else if (nosePos < 15) {
+            nosePos = 15;
+          }
+          nosePos = map(nosePos, 15, 85, 0, 100);
+
+          // Drawing image on canvas
+          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+          console.log("results.image", results.image)
+          canvasCtx.drawImage(results.image,
+                              nose.x*canvasElement.width - results.detections[0].boundingBox.width*canvasElement.width/2 ,
+                              nose.y*canvasElement.height - results.detections[0].boundingBox.height*canvasElement.height/2,
+                              results.detections[0].boundingBox.width*canvasElement.width,
+                              results.detections[0].boundingBox.height*canvasElement.height,
+                              0, 0, canvasElement.width, canvasElement.height);
+          // canvasCtx.drawImage(results.image,
+          //                     (results.detections[0].landmarks[2].x*canvasElement.width - results.detections[0].boundingBox.width),
+          //                     (results.detections[0].landmarks[2].y*canvasElement.height - results.detections[0].boundingBox.height),
+          //                     (results.detections[0].landmarks[2].x*canvasElement.width + results.detections[0].boundingBox.width),
+          //                     (results.detections[0].landmarks[2].y*canvasElement.height + results.detections[0].boundingBox.height),
+          //                     0, 0, canvasElement.width, canvasElement.height);
+          
+          // canvasCtx.drawImage(
+          // results.image, 0, 0, canvasElement.width, canvasElement.height);
+          // canvasCtx.fillRect(nose.x*canvasElement.width - results.detections[0].boundingBox.width*canvasElement.width/2 ,
+          //                    nose.y*canvasElement.height - results.detections[0].boundingBox.height*canvasElement.height/2,
+          //                    results.detections[0].boundingBox.width*canvasElement.width,
+          //                    results.detections[0].boundingBox.height*canvasElement.height );
+
+          // canvasCtx.fillRect((nose.x*canvasElement.width - results.detections[0].boundingBox.width*canvasElement.width/2),
+          //                     (nose.y*canvasElement.height - results.detections[0].boundingBox.height*canvasElement.height/2),
+          //                     (nose.x*canvasElement.width + results.detections[0].boundingBox.width*canvasElement.width/2),
+          //                     (nose.y*canvasElement.height + results.detections[0].boundingBox.height*canvasElement.height/2));
+
+          // canvasCtx.drawImage(videoElement, nose.x - 50, nose.y - 50, 400, 200);
+        } catch (e) {
+          //nosePos = 50;
+        //   document.getElementById("footer").style.backgroundColor = "red";
+          console.log("No face detected");
+        }
+
+        canvasCtx.restore();
+      }
+
+      const faceDetection = new FaceDetection({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        },
+      });
+      faceDetection.setOptions({
+        //modelSelection: 0,
+        model: "short",
+        minDetectionConfidence: 0.5,
+      });
+      faceDetection.onResults(onResults1);
+
+      const camera = new Camera(videoElement, {
+        onFrame: async () => {
+          await faceDetection.send({ image: videoElement });
+        },
+        width: 1280,
+        height: 720,
+      });
+      camera.start();
+      setTimeout("setup()", 2000);
+    </script>
+  </head>
+  <body>
+    <div id="gameCanvas"></div>
+    <div id="scoreboard">
+      <h1 id="scores">0-0</h1>
+      <h1 id="title">3D PONG</h1>
+      <h2 id="winnerBoard">First to 7 wins!</h2>
+      <h3>A - move left <br />D - move right</h3>
+    </div>
+    <!-- <canvas class="output_canvas"></canvas> -->
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <video class="input_video" style="height: 50px"></video>
+  </body>
+</html>

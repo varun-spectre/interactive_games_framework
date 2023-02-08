@@ -47,6 +47,34 @@ var planeWidth = fieldWidth,
     planeHeight = fieldHeight,
     planeQuality = 10;
 
+// ------------------------------------- //
+// ------- Sound Fucntions-------------- //
+// ------------------------------------- //
+
+const audioContext = new AudioContext();
+const gainNode = audioContext.createGain();
+gainNode.connect(audioContext.destination);
+
+let audioBuffer;
+
+async function loadAudioBuffer(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  return audioBuffer;
+}
+
+// Load an audio file
+async function setupAudio() {
+  const audioBuffer = await loadAudioBuffer('./static/piano_sound/A0.mp3');
+
+  // Create an audio buffer from the audio file
+  const bufferSource = audioContext.createBufferSource();
+  bufferSource.buffer = audioBuffer;
+  bufferSource.connect(gainNode);
+}
+
+setupAudio();
 
 // ------------------------------------- //
 // ------- GAME FUNCTIONS -------------- //
@@ -242,6 +270,14 @@ function createScene() {
     paddle1Material
   );
 
+  paddle1.play = function () {
+    // Play the audio buffer
+    const bufferSource = audioContext.createBufferSource();
+    bufferSource.buffer = audioBuffer;
+    bufferSource.connect(gainNode);
+    bufferSource.start(0);
+}
+
   // // add the sphere to the scene
   scene.add(paddle1);
   paddle1.receiveShadow = true;
@@ -351,8 +387,8 @@ function draw() {
   // draw THREE.JS scene
   canvasCtx = document.getElementsByClassName("output_canvas")[0].getContext("2d");  
   texture = new THREE.CanvasTexture(canvasCtx.canvas);
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
+  // texture.wrapS = THREE.ClampToEdgeWrapping;
+  // texture.wrapT = THREE.ClampToEdgeWrapping;
   // texture.wrapS = THREE.MirroredRepeatWrapping;
   // console.log("in draw")
   texture.needsUpdate = true;
@@ -597,6 +633,10 @@ function paddlePhysics() {
         // stretch the paddle to indicate a hit
         paddle1.scale.z = 2;
         // paddle1.scale.y = 15; removed this
+
+        //paddle sound
+        paddle1.play();
+
         // switch direction of ball travel to create bounce
         ballDirX = -ballDirX;
         // we impact ball angle when hitting it

@@ -63,7 +63,7 @@
           // console.log("boundaryDetails", boundaryDetails)
           // console.log("results.detections[0].boundingBox", results.detections[0].boundingBox)
           // console.log("results.detections[0].boundingBox.xCenter", results.detections[0].boundingBox.xCenter)
-          console.log("canvas height and width",canvasElement.width, canvasElement.height )
+          // console.log("canvas height and width",canvasElement.width, canvasElement.height )
           nosePos = map(nose.x, 1, 0, 0, 100);
           if (nosePos > 85) {
             nosePos = 85;
@@ -74,7 +74,7 @@
 
           // Drawing image on canvas
           canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-          console.log("results.image", results.image)
+          // console.log("results.image", results.image)
           canvasCtx.drawImage(results.image,
                               nose.x*canvasElement.width - results.detections[0].boundingBox.width*canvasElement.width/2 ,
                               nose.y*canvasElement.height - results.detections[0].boundingBox.height*canvasElement.height/2,

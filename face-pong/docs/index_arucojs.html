@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      #gameCanvas {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+        position: absolute;
+      }
+      #scoreboard {
+        text-align: center;
+        font-family: Segoe UI, Helvetica, Ubuntu, sans-serif;
+        color: white;
+      }
+      #scores {
+        font-size: 600%;
+        padding: 0;
+        margin: 0;
+        color: white;
+      }
+      #title {
+        background-color: white;
+        color: black;
+      }
+    </style>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script> -->
+
+    <!-- <script src="https://cdn.jsdelivr.net/gh/varun-spectre/face-pong@latest/docs/scripts/game.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/gh/varun-spectre/face-pong@latest/docs/scripts/three.min.js" crossorigin="anonymous"></script> -->
+    <script type="text/javascript" src="./scripts/cv.js"></script> 
+    <script type="text/javascript" src="./scripts/aruco.js"></script> 
+  
+    <script src="./scripts/three.min.js"></script>
+
+    <script src="./scripts/game.js"></script>
+
+    <script type="module">
+      var imageData, aruco, marker_1_x, marker_1_y, marker_2_x, marker_2_y, marker_left,  marker_right;
+      const nose = {x: undefined, y: undefined};
+      // const videoElement = document.getElementsByClassName("input_video")[0];
+      const videoElement = document.getElementById("video");
+      navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+          video.srcObject = stream;
+      });
+      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+      const canvasCtx = canvasElement.getContext("2d");
+
+      // canvas for aurco
+      const canvasAruco = document.getElementsByClassName("canvas_aurcojs")[0];
+      canvasAruco.style.display = "none";
+      const context = canvasAruco.getContext("2d");
+      canvasAruco.width = parseInt(canvasAruco.width);
+      canvasAruco.height = parseInt(canvasAruco.height);
+      
+      function map(x, in_min, in_max, out_min, out_max) {
+          return (
+              ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+          );
+      }
+    //   map(nose_x_scaled, 1, 0, 0, 100)
+
+      // Function for finding the average of corners
+      function getAvg(corners) {
+          var total_x_marker = 0;
+          var total_y_marker = 0;
+          for(var i = 0; i < corners.length; i++) {
+            total_x_marker += corners[i].x;
+            total_y_marker += corners[i].y;
+          }
+          return [Math.trunc(total_x_marker/corners.length),  Math.trunc(total_y_marker/corners.length)]
+      }
+
+      // Initialize the js-aruco library
+      aruco = new AR.Detector();
+
+      // Function to detect markers and calculate the change in position
+      function detectMarkers() {
+          // Get the imagedata
+          context.drawImage(videoElement, 0, 0, canvasAruco.width, canvasAruco.height);
+          imageData = context.getImageData(0, 0, canvasAruco.width, canvasAruco.height);
+        //   console.log("imageData", imageData)
+          // Detect markers in the frame
+          try {
+              var markers = aruco.detect(imageData);
+              if (markers.length == 2) {
+                var temp = getAvg(markers[0].corners)
+                marker_1_x = temp[0]
+                marker_1_y = temp[1]
+                temp = getAvg(markers[1].corners)
+                marker_2_x = temp[0]
+                marker_2_y = temp[1]
+                if (marker_1_x > marker_2_x){
+                  marker_left = [marker_2_x, marker_2_y]
+                  marker_right = [marker_1_x, marker_1_y]
+                }
+                else{
+                  marker_left = [marker_1_x, marker_1_y]
+                  marker_right = [marker_2_x, marker_2_y]
+                }
+
+                var delta_x = marker_right[0] - marker_left[0]
+                nose.x = Math.trunc(marker_left[0] + delta_x/2)
+                nose.y = Math.trunc(marker_left[1] + (delta_x *1.732)/2)
+              }
+              console.log("nose", nose)
+              var nose_x_scaled = (nose.x/1280)
+              // console.log("nosepos before mapping", nosePos)
+              console.log("nose x scaled", nose_x_scaled)
+              nosePos = map(nose_x_scaled, 1, 0, 0, 100);
+              console.log("nosepos after mapping", nosePos) 
+              if (nosePos > 85) {
+                  nosePos = 85;
+              } else if (nosePos < 15) {
+                  nosePos = 15;
+              }
+              nosePos = map(nosePos, 15, 85, 0, 100);
+            //   console.log("nosepos after mapping", nosePos)
+              // Drawing image on canvas
+              canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+              canvasCtx.drawImage(videoElement,
+                                  nose.x*canvasElement.width - delta_x*canvasElement.width ,
+                                  nose.y*canvasElement.height - Math.trunc((delta_x *1.732)*canvasElement.width),
+                                  nose.x*canvasElement.width + delta_x*canvasElement.width ,
+                                  nose.y*canvasElement.height + Math.trunc((delta_x *1.732)*canvasElement.width),
+                                  0, 0, canvasElement.width, canvasElement.height);
+
+              
+          } catch (e) {
+              console.log("less than 2 markers detected");
+              console.log("error: ", e)
+          }
+          canvasCtx.restore();
+          setTimeout(detectMarkers, 10);
+      }
+      // Start the marker detection loop
+      detectMarkers();
+      setTimeout("setup()", 2000);
+
+    </script>
+  </head>
+  <body>
+    <div id="gameCanvas"></div>
+    <div id="scoreboard">
+      <h1 id="scores">0-0</h1>
+      <h1 id="title">3D PONG</h1>
+      <h2 id="winnerBoard">First to 7 wins!</h2>
+      <h3>A - move left <br />D - move right</h3>
+    </div>
+    <!-- <canvas class="output_canvas"></canvas> -->
+    <canvas class="canvas_aurcojs" width="1280" height="720"></canvas>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <!-- <video class="input_video" style="height: 50px"></video> -->
+    <video id="video" autoplay="true" style="display:none;"></video>
+  </body>
+</html>

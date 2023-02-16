@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      #gameCanvas {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+        /* position: absolute; */
+        position: fixed;
+        top: 0;
+        left: 0;
+        touch-action: none;
+        -ms-touch-action: none;
+        overflow: hidden;
+      }
+      #scoreboard {
+        text-align: center;
+        font-family: Segoe UI, Helvetica, Ubuntu, sans-serif;
+        color: white;
+      }
+      #scores {
+        font-size: 600%;
+        padding: 0;
+        margin: 0;
+        color: white;
+      }
+      #title {
+        background-color: white;
+        color: black;
+      }
+    </style>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  
+    <script src="./scripts/three.min.js"></script>
+
+    <script src="./scripts/game.js"></script>
+
+    <script type="module">
+      const videoElement = document.getElementsByClassName("input_video")[0];
+      const canvasElement = document.getElementsByClassName("output_canvas")[0];
+      const canvasCtx = canvasElement.getContext("2d");
+    //   const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+    //   const grid = new LandmarkGrid(landmarkContainer);
+      function map(x, in_min, in_max, out_min, out_max) {
+        return (
+          ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+        );
+      }
+
+      function onResults(results) {
+        if (!results.poseLandmarks) {
+        //   grid.updateLandmarks([]);
+          return;
+        }
+        
+        var nose  = results.poseLandmarks[0]
+        nosePos = map(nose.x, 1, 0, 0, 100);
+        if (nosePos > 85) {
+        nosePos = 85;
+        } else if (nosePos < 15) {
+        nosePos = 15;
+        }
+        nosePos = map(nosePos, 15, 85, 0, 100);
+        
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        // console.log("results.poseLandmarks[8]", results.poseLandmarks[8].x*canvasElement.width)
+        // console.log("results.poseLandmarks[0]", results.poseLandmarks[0].x*canvasElement.width)
+        // console.log("results.poseLandmarks[7]", results.poseLandmarks[7].x*canvasElement.width)
+        // console.log("top left xpos", results.poseLandmarks[8]*canvasElement.width)
+        // console.log("top left ypos", nose.y*canvasElement.height - (nose.x*canvasElement.width - results.poseLandmarks[8]*canvasElement.width))
+        // console.log("bottom right xpos", results.poseLandmarks[7]*canvasElement.width,)
+        // console.log("bottom right ypos", nose.y*canvasElement.height + (nose.x*canvasElement.width - results.poseLandmarks[8]*canvasElement.width))
+
+        var faceWidth = results.poseLandmarks[7].x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width
+        
+        console.log("nose.x*canvasElement.width -  faceWidth", nose.x*canvasElement.width -  faceWidth)
+        console.log("nose.y*canvasElement.height - faceWidth", nose.y*canvasElement.height - faceWidth)
+        console.log("nose.x*canvasElement.width +  faceWidth", nose.x*canvasElement.width +  faceWidth)
+        console.log("nose.y*canvasElement.height + faceWidth", nose.y*canvasElement.height + faceWidth)
+        canvasCtx.drawImage(results.image,
+                            nose.x*canvasElement.width -  faceWidth,
+                            nose.y*canvasElement.height - faceWidth,
+                            nose.x*canvasElement.width +  faceWidth,
+                            nose.y*canvasElement.height + faceWidth,
+                            // (nose.y*canvasElement.height - (nose.x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width))*1.5,
+                            // (nose.x*canvasElement.width +  results.poseLandmarks[8].x*canvasElement.width)*1.5,
+                            // (nose.y*canvasElement.height + (nose.x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width))*1.5,
+                            0, 0, canvasElement.width, canvasElement.height);
+        
+        // canvasCtx.beginPath();
+        // canvasCtx.arc(nose.x*canvasElement.width -  faceWidth,
+        //               nose.y*canvasElement.height - faceWidth,
+        //               20, 0, 2 * Math.PI);
+        // canvasCtx.fillStyle = 'blue'; // set fill color
+        // canvasCtx.fill(); // fill the circle with the specified color
+        // canvasCtx.stroke();
+
+        // canvasCtx.beginPath();
+        // canvasCtx.arc(nose.x*canvasElement.width +  faceWidth,
+        //               nose.y*canvasElement.height + faceWidth,
+        //               20, 0, 2 * Math.PI);
+        // canvasCtx.fillStyle = 'red'; // set fill color
+        // canvasCtx.fill(); // fill the circle with the specified color
+        // canvasCtx.stroke();
+
+        // canvasCtx.beginPath();
+        // canvasCtx.arc(nose.x*canvasElement.width,
+        //               nose.y*canvasElement.height,
+        //               20, 0, 2 * Math.PI);
+        // canvasCtx.fillStyle = 'green'; // set fill color
+        // canvasCtx.fill(); // fill the circle with the specified color
+        // canvasCtx.stroke();
+
+        // canvasCtx.beginPath();
+        // canvasCtx.arc(results.poseLandmarks[7].x*canvasElement.width,
+        //               results.poseLandmarks[7].y*canvasElement.height,
+        //               20, 0, 2 * Math.PI);
+        // canvasCtx.fillStyle = 'green'; // set fill color
+        // canvasCtx.fill(); // fill the circle with the specified color
+        // canvasCtx.stroke();
+
+        // canvasCtx.restore();
+        // grid.updateLandmarks(results.poseWorldLandmarks);
+      }
+
+      const pose = new Pose({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+      }});
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: true,
+        smoothSegmentation: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+        });
+      pose.onResults(onResults);
+
+      const camera = new Camera(videoElement, {
+        onFrame: async () => {
+          await pose.send({ image: videoElement });
+        },
+        width: 1280,
+        height: 720,
+      });
+      camera.start();
+      setTimeout("setup()", 2000);
+    </script>
+  <iframe src="./index_tonejs.html" frameborder="0" scrolling="no" style="position: fixed; bottom: 0; right: 0; width: 300px; height: 400px; z-index: 999"></iframe>
+  </head>
+  <body>
+    <div id="gameCanvas"></div>
+    <!-- <div class="landmark-grid-container"></div> -->
+    <div id="scoreboard">
+      <h1 id="scores">0-0</h1>
+      <h1 id="title">3D PONG</h1>
+      <h2 id="winnerBoard">First to 7 wins!</h2>
+      <h3>A - move left <br />D - move right</h3>
+    </div>
+    <!-- <canvas class="output_canvas"></canvas> -->
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <video class="input_video" style="height: 50px"></video>
+  </body>
+</html>

@@ -51,30 +51,30 @@ var planeWidth = fieldWidth,
 // ------- Sound Fucntions-------------- //
 // ------------------------------------- //
 
-const audioContext = new AudioContext();
-const gainNode = audioContext.createGain();
-gainNode.connect(audioContext.destination);
+// const audioContext = new AudioContext();
+// const gainNode = audioContext.createGain();
+// gainNode.connect(audioContext.destination);
 
-let audioBuffer;
+// let audioBuffer;
 
-async function loadAudioBuffer(url) {
-  const response = await fetch(url);
-  const arrayBuffer = await response.arrayBuffer();
-  audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  return audioBuffer;
-}
+// async function loadAudioBuffer(url) {
+//   const response = await fetch(url);
+//   const arrayBuffer = await response.arrayBuffer();
+//   audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+//   return audioBuffer;
+// }
 
-// Load an audio file
-async function setupAudio() {
-  const audioBuffer = await loadAudioBuffer('./static/piano_sound/A0.mp3');
+// // Load an audio file
+// async function setupAudio() {
+//   const audioBuffer = await loadAudioBuffer('./static/piano_sound/A0.mp3');
 
-  // Create an audio buffer from the audio file
-  const bufferSource = audioContext.createBufferSource();
-  bufferSource.buffer = audioBuffer;
-  bufferSource.connect(gainNode);
-}
+//   // Create an audio buffer from the audio file
+//   const bufferSource = audioContext.createBufferSource();
+//   bufferSource.buffer = audioBuffer;
+//   bufferSource.connect(gainNode);
+// }
 
-setupAudio();
+// setupAudio();
 
 // ------------------------------------- //
 // ------- GAME FUNCTIONS -------------- //
@@ -392,7 +392,7 @@ function draw() {
   // texture.wrapS = THREE.MirroredRepeatWrapping;
   // console.log("in draw")
   texture.needsUpdate = true;
-  img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
+  img = new THREE.MeshBasicMaterial({ 
     map: texture,
   });
   footerPlane.material = img;
@@ -635,7 +635,7 @@ function paddlePhysics() {
         // paddle1.scale.y = 15; removed this
 
         //paddle sound
-        paddle1.play();
+        // paddle1.play();
 
         // switch direction of ball travel to create bounce
         ballDirX = -ballDirX;

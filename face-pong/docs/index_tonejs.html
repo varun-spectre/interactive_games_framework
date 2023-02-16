@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <title>ToneJS</title>
+    <style>
+        body > div {
+        text-align: center;
+        margin-top: 4rem;
+        }
+        body > div > div + div {
+        margin-top: 1rem;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" integrity="sha512-jduERlz7En1IUZR54bqzpNI64AbffZWR//KJgF71SJ8D8/liKFZ+s1RxmUmB+bhCnIfzebdZsULwOrbVB5f3nQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module">
+        console.clear();
+
+        // UPDATE: there is a problem in chrome with starting audio context
+        //  before a user gesture. This fixes it.
+        document.documentElement.addEventListener('mousedown', () => {
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        });
+
+        const synths = [
+        new Tone.Synth(),
+        new Tone.Synth(),
+        new Tone.Synth()
+        ];
+
+        synths[0].oscillator.type = 'triangle';
+        synths[1].oscillator.type = 'sine';
+        synths[2].oscillator.type = 'sawtooth';
+
+        const gain = new Tone.Gain(0.6);
+        gain.toMaster();
+
+        synths.forEach(synth => synth.connect(gain));
+
+        const $rows = document.body.querySelectorAll('div > div'),
+            notes = ['G5', 'E4', 'C3'];
+        let index = 0;
+
+        Tone.Transport.scheduleRepeat(repeat, '8n');
+        Tone.Transport.start();
+
+        function repeat(time) {
+        let step = index % 8;
+        for (let i = 0; i < $rows.length; i++) {
+            let synth = synths[i],
+                note = notes[i],
+                $row = $rows[i],
+                $input = $row.querySelector(`input:nth-child(${step + 1})`);
+            if ($input.checked) synth.triggerAttackRelease(note, '8n', time);
+        }
+        index++;
+        }
+
+    </script>
+
+    <body>
+        <div>
+            <div>
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+            </div>
+            <div>
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+            </div>
+            <div>
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+              <input type="checkbox" />
+            </div>
+          </div>
+    </body>
+
+
+</html>

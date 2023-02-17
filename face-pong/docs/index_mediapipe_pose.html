@@ -59,6 +59,7 @@
       }
 
       function onResults(results) {
+        // console.time('doSomething')
         if (!results.poseLandmarks) {
         //   grid.updateLandmarks([]);
           return;
@@ -83,16 +84,19 @@
         // console.log("bottom right ypos", nose.y*canvasElement.height + (nose.x*canvasElement.width - results.poseLandmarks[8]*canvasElement.width))
 
         var faceWidth = results.poseLandmarks[7].x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width
-        
-        console.log("nose.x*canvasElement.width -  faceWidth", nose.x*canvasElement.width -  faceWidth)
-        console.log("nose.y*canvasElement.height - faceWidth", nose.y*canvasElement.height - faceWidth)
-        console.log("nose.x*canvasElement.width +  faceWidth", nose.x*canvasElement.width +  faceWidth)
-        console.log("nose.y*canvasElement.height + faceWidth", nose.y*canvasElement.height + faceWidth)
+        // console.log("face width", faceWidth)
+
+        // console.log("nose.x*canvasElement.width -  faceWidth", nose.x*canvasElement.width -  faceWidth)
+        // console.log("nose.y*canvasElement.height - faceWidth", nose.y*canvasElement.height - faceWidth)
+        // console.log("nose.x*canvasElement.width +  faceWidth", nose.x*canvasElement.width +  faceWidth)
+        // console.log("nose.y*canvasElement.height + faceWidth", nose.y*canvasElement.height + faceWidth)
         canvasCtx.drawImage(results.image,
                             nose.x*canvasElement.width -  faceWidth,
                             nose.y*canvasElement.height - faceWidth,
-                            nose.x*canvasElement.width +  faceWidth,
-                            nose.y*canvasElement.height + faceWidth,
+                            faceWidth*2,
+                            faceWidth*2,
+                            // nose.x*canvasElement.width +  faceWidth,
+                            // nose.y*canvasElement.height + faceWidth,
                             // (nose.y*canvasElement.height - (nose.x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width))*1.5,
                             // (nose.x*canvasElement.width +  results.poseLandmarks[8].x*canvasElement.width)*1.5,
                             // (nose.y*canvasElement.height + (nose.x*canvasElement.width - results.poseLandmarks[8].x*canvasElement.width))*1.5,
@@ -131,6 +135,7 @@
         // canvasCtx.stroke();
 
         // canvasCtx.restore();
+        // console.timeEnd('doSomething')
         // grid.updateLandmarks(results.poseWorldLandmarks);
       }
 
@@ -151,8 +156,8 @@
         onFrame: async () => {
           await pose.send({ image: videoElement });
         },
-        width: 1280,
-        height: 720,
+        width: 160,
+        height: 90,
       });
       camera.start();
       setTimeout("setup()", 2000);
@@ -169,7 +174,7 @@
       <h3>A - move left <br />D - move right</h3>
     </div>
     <!-- <canvas class="output_canvas"></canvas> -->
-    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <canvas class="output_canvas" width="160px" height="90px"></canvas>
     <video class="input_video" style="height: 50px"></video>
   </body>
 </html>

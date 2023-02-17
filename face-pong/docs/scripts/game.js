@@ -385,6 +385,7 @@ function createScene() {
 
 function draw() {
   // draw THREE.JS scene
+  console.time('doSomething')
   canvasCtx = document.getElementsByClassName("output_canvas")[0].getContext("2d");  
   texture = new THREE.CanvasTexture(canvasCtx.canvas);
   // texture.wrapS = THREE.ClampToEdgeWrapping;
@@ -407,6 +408,7 @@ function draw() {
   playerPaddleMovement();
   opponentPaddleMovement();
   footerPlaneMovement();
+  console.timeEnd('doSomething')
 }
 
 // function textureUpdate(){

@@ -135,8 +135,8 @@
         onFrame: async () => {
           await faceDetection.send({ image: videoElement });
         },
-        width: 1280,
-        height: 720,
+        width: 160,
+        height: 90,
       });
       camera.start();
       setTimeout("setup()", 2000);
@@ -152,7 +152,7 @@
       <h3>A - move left <br />D - move right</h3>
     </div>
     <!-- <canvas class="output_canvas"></canvas> -->
-    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <canvas class="output_canvas" width="160px" height="90px"></canvas>
     <video class="input_video" style="height: 50px"></video>
   </body>
 </html>

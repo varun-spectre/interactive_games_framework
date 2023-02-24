@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      #gameCanvas {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+        /* position: absolute; */
+        position: fixed;
+        top: 0;
+        left: 0;
+        touch-action: none;
+        -ms-touch-action: none;
+        overflow: hidden;
+      }
+      #scoreboard {
+        text-align: center;
+        font-family: Segoe UI, Helvetica, Ubuntu, sans-serif;
+        color: white;
+      }
+      #scores {
+        font-size: 600%;
+        padding: 0;
+        margin: 0;
+        color: white;
+      }
+      #title {
+        background-color: white;
+        color: black;
+      }
+    </style>
+    <meta charset="utf-8">
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script> -->
+  
+    <script src="./scripts/three.min.js"></script>
+
+    <script src="./scripts/game.js"></script>
+
+    <script type="module">
+        const videoElement = document.getElementsByClassName("input_video")[0];
+        console.log(videoElement.height, videoElement.width)
+        
+        // output canvas for drawing on footer plane
+        const canvasElement = document.getElementsByClassName("output_canvas")[0];
+        const canvasCtx = canvasElement.getContext("2d");
+
+        // output canvas for sending image to mediapipe
+        const mediapipeCanvas = document.getElementsByClassName("canvas_for_mediapipe")[0];
+        const canvasMeadiapipe = mediapipeCanvas.getContext("2d");
+
+
+        // set up webcam feed
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                videoElement.srcObject = stream;
+                videoElement.onloadedmetadata = function(e) {
+                    videoElement.play();
+                    sendFrame();
+                    // setInterval(sendFrame, 100); // send frame every 100ms
+                };
+            })
+            .catch(function(err) {
+                console.log("Error accessing webcam: " + err);
+            });
+
+
+        // set up websocket connection
+        const ws = new WebSocket('ws://35.91.155.140:7777');
+        // const ws = new WebSocket('https://localhost:8765');
+        ws.onopen = function() {
+            console.log('Connected to WebSocket server');
+        };
+
+
+        function map(x, in_min, in_max, out_min, out_max) {
+            return (
+            ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+            );
+        }
+
+        // recieve from server
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.hasOwnProperty('x')) { 
+                // console.time('onMessage')             
+                // mapping nosepos
+                nosePos = map(data.x, 1, 0, 0, 100);
+                if (nosePos > 85) {
+                    nosePos = 85;
+                } else if (nosePos < 15) {
+                    nosePos = 15;
+                }
+                nosePos = map(nosePos, 15, 85, 0, 100);
+
+                // drawing on canvas for footerplane
+                
+                const img = new Image();
+                img.onload = () => {
+                    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                    const aspectRatio = img.width / img.height;
+                    const canvasWidth = canvasElement.width;
+                    const canvasHeight = canvasWidth / aspectRatio;
+                    canvasElement.height = canvasHeight;
+                    canvasCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasWidth, canvasHeight);
+                }
+                img.src = "data:image/png;base64," + data.image;
+
+                // console.timeEnd('onMessage')  
+                // console.log('Received nose position:', data);
+            } else {
+                console.log('Received unknown data:', data);
+            }
+        };
+
+
+        let numFrames = 0;
+        let prevTime = window.performance.now();
+
+        // function to send current frame to server
+        function sendFrame() {
+            // console.time('sendFrame')
+            // draw current frame to canvas
+            canvasMeadiapipe.drawImage(videoElement, 0, 0, mediapipeCanvas.width, mediapipeCanvas.height);
+            const image = mediapipeCanvas.toDataURL('image/png');
+            // send image to server
+            ws.send(image);
+            // console.timeEnd('sendFrame')
+            // request next frame
+            requestAnimationFrame(sendFrame);
+            // count the frame
+            numFrames++;
+
+            // measure the frame rate every second
+            const currTime = window.performance.now();
+            if (currTime - prevTime >= 1000) {
+              const fps = numFrames / ((currTime - prevTime) / 1000);
+              console.log(`Frame rate: ${fps.toFixed(2)} fps`);
+              numFrames = 0;
+              prevTime = currTime;
+            }
+        }
+
+      setTimeout("setup()", 2000);
+    </script>
+  <!-- <iframe src="./index_tonejs.html" frameborder="0" scrolling="no" style="position: fixed; bottom: 0; right: 0; width: 300px; height: 400px; z-index: 999"></iframe> -->
+  </head>
+  <body>
+    <div id="gameCanvas"></div>
+    <!-- <div class="landmark-grid-container"></div> -->
+    <div id="scoreboard">
+      <h1 id="scores">0-0</h1>
+      <h1 id="title">3D PONG</h1>
+      <h2 id="winnerBoard">First to 7 wins!</h2>
+      <h3>A - move left <br />D - move right</h3>
+    </div>
+    <!-- <canvas class="output_canvas"></canvas> -->
+    <canvas class="output_canvas" width="160px" height="90px"></canvas>
+    <canvas class="canvas_for_mediapipe" width="160px" height="90px"></canvas>
+    <video class="input_video"  width="160px" height="90px"></video>
+  </body>
+</html>

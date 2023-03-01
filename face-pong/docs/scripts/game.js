@@ -51,30 +51,57 @@ var planeWidth = fieldWidth,
 // ------- Sound Fucntions-------------- //
 // ------------------------------------- //
 
-// const audioContext = new AudioContext();
-// const gainNode = audioContext.createGain();
-// gainNode.connect(audioContext.destination);
+const audioContext = new AudioContext();
+const gainNode = audioContext.createGain();
+gainNode.connect(audioContext.destination);
 
-// let audioBuffer;
+let audioBufferLooming, audioBufferImpact;
 
-// async function loadAudioBuffer(url) {
-//   const response = await fetch(url);
-//   const arrayBuffer = await response.arrayBuffer();
-//   audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-//   return audioBuffer;
-// }
+async function loadAudioBuffer(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  return decodedBuffer;
+}
 
-// // Load an audio file
-// async function setupAudio() {
-//   const audioBuffer = await loadAudioBuffer('./static/piano_sound/A0.mp3');
+// Load an audio file and return the buffer
+async function loadAudioFile(url) {
+  const buffer = await loadAudioBuffer(url);
+  return buffer;
+}
 
-//   // Create an audio buffer from the audio file
-//   const bufferSource = audioContext.createBufferSource();
-//   bufferSource.buffer = audioBuffer;
-//   bufferSource.connect(gainNode);
-// }
+// Play the given audio buffer
+function playAudioBuffer(buffer, duration) {
+  const bufferSource = audioContext.createBufferSource();
+  bufferSource.buffer = buffer;
+  bufferSource.connect(gainNode);
+  bufferSource.start(0);
+  bufferSource.stop(audioContext.currentTime + duration);
+}
 
-// setupAudio();
+function stopAudioBuffer(bufferSource) {
+  if (bufferSource) {
+    if (typeof bufferSource.stop === 'function') {
+      bufferSource.stop();
+    } else if (typeof bufferSource.noteOff === 'function') {
+      bufferSource.noteOff(0);
+    }
+  }
+}
+
+// Load the audio file and play it
+async function setupLoomingAudio() {
+  audioBufferLooming = await loadAudioFile('https://facepong-sounds.s3.amazonaws.com/Looming+Only/L01/Mono/L01a+Mono.wav');
+}
+
+setupLoomingAudio();
+
+// Load the audio file and play it
+async function setupImpactAudio() {
+  audioBufferImpact = await loadAudioFile('https://facepong-sounds.s3.amazonaws.com/Impact+Only/Mono/Impact+Pong++mono+01+.wav');
+}
+
+setupImpactAudio();
 
 // ------------------------------------- //
 // ------- GAME FUNCTIONS -------------- //
@@ -270,13 +297,22 @@ function createScene() {
     paddle1Material
   );
 
-  paddle1.play = function () {
-    // Play the audio buffer
-    const bufferSource = audioContext.createBufferSource();
-    bufferSource.buffer = audioBuffer;
-    bufferSource.connect(gainNode);
-    bufferSource.start(0);
-}
+  // paddle1.play = function () {
+  //   // Play the audio buffer
+  //   const bufferSource = audioContext.createBufferSource();
+  //   bufferSource.buffer = audioBufferLooming;
+  //   bufferSource.connect(gainNode);
+  //   bufferSource.start(0);
+  
+  // Impact audio function
+  paddle1.playImpact = function () {
+    playAudioBuffer(audioBufferImpact);
+  }
+
+  // Looming audio function
+  paddle1.playLooming = function () {
+    playAudioBuffer(audioBufferLooming);
+  }
 
   // // add the sphere to the scene
   scene.add(paddle1);
@@ -614,8 +650,19 @@ function cameraPhysics() {
   camera.rotation.z = (-90 * Math.PI) / 180;
 }
 
+// let loomingSound = null;
+let isLoomingPlaying = false;
+const loomingDistance = 400;
+let loomingSource;
+
 // Handles paddle collision logic
 function paddlePhysics() {
+
+  // Calculate the distance between the ball and the paddles
+  const distanceToPaddle1 = ball.position.distanceTo(paddle1.position);
+  // const distanceToPaddle2 = ball.position.distanceTo(paddle2.position);
+
+
   // PLAYER PADDLE LOGIC
 
   // if ball is aligned with paddle1 on x plane
@@ -637,7 +684,8 @@ function paddlePhysics() {
         // paddle1.scale.y = 15; removed this
 
         //paddle sound
-        // paddle1.play();
+        // paddle1.playImpact();
+        playAudioBuffer(audioBufferImpact, 1);
 
         // switch direction of ball travel to create bounce
         ballDirX = -ballDirX;
@@ -645,6 +693,15 @@ function paddlePhysics() {
         // this is not realistic physics, just spices up the gameplay
         // allows you to 'slice' the ball to beat the opponent
         ballDirY -= paddle1DirY * 0.7;
+
+        // stop the looming music
+        if (isLoomingPlaying) {
+          if (loomingSource) {
+            loomingSource.stop();
+          }
+          isLoomingPlaying = false;
+        }
+        
       }
     }
   }
@@ -677,6 +734,23 @@ function paddlePhysics() {
       }
     }
   }
+
+  // Check if ball is approaching the paddle
+  if (ballDirX < 0 && distanceToPaddle1 <= loomingDistance) {
+    // Play the looming music if it is not already playing
+    if (!isLoomingPlaying) {
+      loomingSource = playAudioBuffer(audioBufferLooming, 2);
+      isLoomingPlaying = true;
+    }
+  } else {
+    if (isLoomingPlaying) {
+      if (loomingSource) {
+        loomingSource.stop();
+      }
+      isLoomingPlaying = false;
+    }
+  }  
+
 }
 
 function resetBall(loser) {

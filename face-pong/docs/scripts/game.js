@@ -652,7 +652,7 @@ function cameraPhysics() {
 
 // let loomingSound = null;
 let isLoomingPlaying = false;
-const loomingDistance = 400;
+const loomingDistance = 250;
 let loomingSource;
 
 // Handles paddle collision logic
@@ -724,6 +724,9 @@ function paddlePhysics() {
       if (ballDirX > 0) {
         // stretch the paddle to indicate a hit
         paddle2.scale.z = 2;
+
+        // play sound
+        playAudioBuffer(audioBufferImpact, 1);
         // paddle2.scale.y = 15; //removed this
         // switch direction of ball travel to create bounce
         ballDirX = -ballDirX;
